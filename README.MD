@@ -22,6 +22,7 @@ class="center">
 
 <p align="center">  
 Illustration of various downsampling modules. (a) illustrates convolutional downsampling for selected regions, employing a 3 × 3 convolutional kernel with stride 2, and padding of 1. (b) depicts max-pooling with kernel and stride of 2. (c) provides in-depth depictions of feature integration downsampling (FID) module. Gconv, PII, MaxD, DWConvD, and Cat denote group convolution, partial information interaction, max-pooling downsampling, depthwise separable convolutional downsampling, and concatenation, respectively. (d) illustrates the detailed exhibition of PII in FID module.
+<p align="center"> 
 <img src="https://github.com/lwCVer/DecoupleNet/blob/main/figures/FID.png" width=70% 
 class="center">
 </p>  
