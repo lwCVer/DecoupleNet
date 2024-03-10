@@ -7,32 +7,45 @@ Remote Sensing Visual Tasks**]
 > 
 
 --- 
-Abstract— In the realm of computer vision (CV), achieving a balance between speed and accuracy remains a significant challenge. Recent efforts in this domain have focused on developing lightweight backbone networks that aim to find an optimal balance between computational efficiency and the ability to extract relevant features. However, when applied to remote sensing (RS) imagery, where the detection of small objects is often critical, these lightweight networks frequently fall short in terms of performance. To tackle these specific challenges in RS image analyses, this article introduces DecoupleNet, an innovative lightweight backbone network tailored for RS visual tasks, particularly suited for resource-constrained environments. DecoupleNet incorporates two key innovations: feature integration downsampling (FID) module and multi-branch feature decoupling (MBFD) module. FID module is designed to preserve small object features during the downsampling process, while MBFD module aims to enhance the representation of small object features and multi-scale object features via a novel feature decoupling approach.
-Our comprehensive evaluation across two distinct RS visual tasks demonstrates DecoupleNet’s superior ability to balance accuracy and computational efficiency compared to existing lightweight networks. Specifically, on the NWPU-RESISC45 classification dataset, DecoupleNet D0 achieves a top-1 accuracy of 95.30%, surpassing the performance of FasterNet T0 by 2%, while requiring fewer parameters and computational overheads. In object detection tasks, using the DOTA 1.0 validation set, DecoupleNet D0 records an accuracy of 69.78%, outperforming FasterNet T0 by 4.65%. Our findings open new avenues for advancing RS image analyses on resource-constrained devices, addressing a pivotal gap in the field.**.
+**Abstract** 
+
+In the realm of computer vision (CV), achieving a balance between speed and accuracy remains a significant challenge. Recent efforts in this domain have focused on developing lightweight backbone networks that aim to find an optimal balance between computational efficiency and the ability to extract relevant features. However, when applied to remote sensing (RS) imagery, where the detection of small objects is often critical, these lightweight networks frequently fall short in terms of performance. To tackle these specific challenges in RS image analyses, this article introduces DecoupleNet, an innovative lightweight backbone network tailored for RS visual tasks, particularly suited for resource-constrained environments. DecoupleNet incorporates two key innovations: feature integration downsampling (FID) module and multi-branch feature decoupling (MBFD) module. FID module is designed to preserve small object features during the downsampling process, while MBFD module aims to enhance the representation of small object features and multi-scale object features via a novel feature decoupling approach. Our comprehensive evaluation across two distinct RS visual tasks demonstrates DecoupleNet’s superior ability to balance accuracy and computational efficiency compared to existing lightweight networks. Specifically, on the NWPU-RESISC45 classification dataset, DecoupleNet D0 achieves a top-1 accuracy of 95.30%, surpassing the performance of FasterNet T0 by 2%, while requiring fewer parameters and computational overheads. In object detection tasks, using the DOTA 1.0 validation set, DecoupleNet D0 records an accuracy of 69.78%, outperforming FasterNet T0 by 4.65%. Our findings open new avenues for advancing RS image analyses on resource-constrained devices, addressing a pivotal gap in the field.
 
 <p align="center">
-<img src="https://github.com/lwCVer/RFD/blob/main/figures/fig3_all_model_1.pdf" width=100% 
+<img src="https://github.com/lwCVer/DecoupleNet/releases/download/figs/Over_view.pdf" width=100% 
 class="center">
-</p>
+</p> Illustration of DecoupleNet architecture.
+
+
+
+<p align="center">
+<img src="https://github.com/lwCVer/DecoupleNet/releases/download/figs/FID.pdf" width=100% 
+class="center">
+</p>  Illustration of various downsampling modules. (a) illustrates convolutional downsampling for selected regions, employing a 3 × 3 convolutional kernel with stride 2, and padding of 1. (b) depicts max-pooling with kernel and stride of 2. (c) provides in-depth depictions of feature integration downsampling (FID) module. Gconv, PII, MaxD, DWConvD, and Cat denote group convolution, partial information interaction, max-pooling downsampling, depthwise separable convolutional downsampling, and concatenation, respectively. (d) illustrates the detailed exhibition of PII in FID module.
+
+<p align="center">
+<img src="https://github.com/lwCVer/DecoupleNet/releases/download/figs/Decouple_Block.pdf" width=100% 
+class="center">
+</p> Illustration of decouple block. Conv, MRLA, and GA denote convolution, medium-range lightweight attention, and global attention, respectively.
 
 ## Image Classification
 ### 1. Dependency Setup
 Create an new conda virtual environment
 ```
-conda create -n RFD python=3.7 -y
-conda activate RFD
+conda create -n DecoupleNet python=3.7 -y
+conda activate DecoupleNet
 conda install pytorch==1.10.0 torchvision==0.11.0 torchaudio==0.10.0 cudatoolkit=11.3 -c pytorch -c conda-forge
 ```
 Clone this repo and install required packages:
 ```
-git clone https://github.com/lwCVer/RFD
-cd RFD/
+git clone https://github.com/lwCVer/DecoupleNet
+cd DecoupleNet/
 pip install -r requirements.txt
 ```
 
 ### 2. Dataset Preparation
 
-Download the [NWPU-RESISC45](https://www.tensorflow.org/datasets/catalog/resisc45) classification dataset and structure the data as follows:
+You can download our already sliced [NWPU-RESISC45](https://github.com/lwCVer/RFD/releases/download/untagged-f0c18b912acc14db4ea2/NWPU-RESISC45.tar.xz) dataset, or download the [NWPU-RESISC45](https://www.tensorflow.org/datasets/catalog/resisc45) classification dataset from the official document and structure the data as follows:
 ```
 /path/to/NWPU-RESISC45/
   train/
@@ -50,55 +63,31 @@ Download the [NWPU-RESISC45](https://www.tensorflow.org/datasets/catalog/resisc4
 
 
 
-### 3. Pre-trained Models (ininial / +RFD) 
+### 3. Pre-trained Models (Pre-trained on RSD46) 
 
-| name (ininial / +RFD) |    type     |  #params (M)  |   FLOPs (G)   | Throughput (fps) |     Top-1 acc     |                                                                                       model                                                                                        |
-|:---------------------:|:-----------:|:-------------:|:-------------:|:----------------:|:-----------------:|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
-|     GFNet-H Tiny      |     FFT     | 14.60 / 15.68 |  2.05 / 2.43  |  2693 /   2128   |   92.27 / 94.76   |   [initial](https://github.com/lwCVer/RFD/releases/download/pre-train/GFNet-H_tiny.pth) / [+RFD](https://github.com/lwCVer/RFD/releases/download/pre-train/GFNet-H_RFD_tiny.pth)   |
-|     GFNet-H Small     |     FFT     | 31.43 / 33.05 |  4.59 / 5.34  |   2405 /  2466   |   93.40 / 95.11   |  [initial](https://github.com/lwCVer/RFD/releases/download/pre-train/GFNet-H_small.pth) / [+RFD](https://github.com/lwCVer/RFD/releases/download/pre-train/GFNet-H_RFD_small.pth)  |
-|     GFNet-H Base      |     FFT     | 53.01 / 55.43 |  8.53 / 9.28  |   2098 / 1886    | 94.17 / **95.46** |   [initial](https://github.com/lwCVer/RFD/releases/download/pre-train/GFNet-H_base.pth) / [+RFD](https://github.com/lwCVer/RFD/releases/download/pre-train/GFNet-H_RFD_base.pth)   |
-|      AS-MLP Tiny      |     MLP     | 27.55 / 29.96 |  4.39 / 5.14  |   1505 / 1571    | 95.37 / **96.05** |    [initial](https://github.com/lwCVer/RFD/releases/download/pre-train/AS-MLP_tiny.pth) / [+RFD](https://github.com/lwCVer/RFD/releases/download/pre-train/AS-MLP_RFD_tiny.pth)    |
-|     AS-MLP Small      |     MLP     | 48.86 / 51.27 |  8.57 / 9.32  |   1073 / 1019    |   95.27 / 96.00   |   [initial](https://github.com/lwCVer/RFD/releases/download/pre-train/AS-MLP_small.pth) / [+RFD](https://github.com/lwCVer/RFD/releases/download/pre-train/AS-MLP_RFD_small.pth)   |
-|      AS-MLP Base      |     MLP     | 86.77 / 91.05 | 15.2 / 16.44  |    861 / 830     |   95.63 / 95.94   |    [initial](https://github.com/lwCVer/RFD/releases/download/pre-train/AS-MLP_base.pth) / [+RFD](https://github.com/lwCVer/RFD/releases/download/pre-train/AS-MLP_RFD_base.pth)    |
-|       Swin Tiny       | Transformer | 27.55 / 29.97 |  4.36 / 5.11  |   2469 / 2313    |   93.52 / 96.10   |      [initial](https://github.com/lwCVer/RFD/releases/download/pre-train/Swin_tiny.pth) / [+RFD](https://github.com/lwCVer/RFD/releases/download/pre-train/Swin_RFD_tiny.pth)      |
-|      Swin Small       | Transformer | 48.87 / 51.28 |  8.52 / 9.27  |   1995 / 1762    |   93.37 / 96.16   |     [initial](https://github.com/lwCVer/RFD/releases/download/pre-train/Swin_small.pth) / [+RFD](https://github.com/lwCVer/RFD/releases/download/pre-train/Swin_RFD_small.pth)     |
-|       Swin Base       | Transformer | 86.79 / 91.06 | 15.14 / 16.37 |   1975 / 1734    | 93.19 / **96.24** |      [initial](https://github.com/lwCVer/RFD/releases/download/pre-train/Swin_base.pth) / [+RFD](https://github.com/lwCVer/RFD/releases/download/pre-train/Swin_RFD_base.pth)      |
-|      CSWin Tiny       | Transformer | 21.83 / 22.05 |  4.08 / 4.35  |   1303 / 1127    |   93.05 / 96.11   |     [initial](https://github.com/lwCVer/RFD/releases/download/pre-train/CSWin_tiny.pth) / [+RFD](https://github.com/lwCVer/RFD/releases/download/pre-train/CSWin_RFD_tiny.pth)     |
-|      CSWin Small      | Transformer | 34.15 / 34.37 |  6.40 / 6.67  |    682 / 579     |   93.56 / 96.11   |    [initial](https://github.com/lwCVer/RFD/releases/download/pre-train/CSWin_small.pth) / [+RFD](https://github.com/lwCVer/RFD/releases/download/pre-train/CSWin_RFD_small.pth)    |
-|      CSWin Base       | Transformer | 76.65 / 77.12 | 14.36 / 14.87 |    481 / 406     | 94.49 / **96.29** |     [initial](https://github.com/lwCVer/RFD/releases/download/pre-train/CSWin_base.pth) / [+RFD](https://github.com/lwCVer/RFD/releases/download/pre-train/CSWin_RFD_base.pth)     |
-|     Swin V2 Tiny      | Transformer | 27.61 / 30.03 |  3.33 / 4.08  |   2009 / 1987    |   94.65 / 96.46   |   [initial](https://github.com/lwCVer/RFD/releases/download/pre-train/Swin_V2_tiny.pth) / [+RFD](https://github.com/lwCVer/RFD/releases/download/pre-train/Swin_V2_RFD_tiny.pth)   |
-|     Swin V2 Small     | Transformer | 48.99 / 51.41 |  6.47 / 7.22  |    1273 / 827    | 95.22 / **96.84** |  [initial](https://github.com/lwCVer/RFD/releases/download/pre-train/Swin_V2_small.pth) / [+RFD](https://github.com/lwCVer/RFD/releases/download/pre-train/Swin_V2_RFD_small.pth)  |
-|     Swin V2 Base      | Transformer | 86.94 / 91.22 | 11.48 / 12.71 |    1104 / 682    |   95.63 / 96.61   |   [initial](https://github.com/lwCVer/RFD/releases/download/pre-train/Swin_V2_base.pth) / [+RFD](https://github.com/lwCVer/RFD/releases/download/pre-train/Swin_V2_RFD_base.pth)   |
-|    Mixformer Tiny     |   Hybrid    |  5.10 / 5.25  |  0.39 / 0.44  |   1287 / 1192    |   94.87 / 95.30   |   [initial](https://github.com/lwCVer/RFD/releases/download/pre-train/Mixformer_B0.pth) / [+RFD](https://github.com/lwCVer/RFD/releases/download/pre-train/Mixformer_RFD_B0.pth)   |
-|    Mixformer Small    |   Hybrid    | 9.89 / 10.17  |  0.88 / 0.95  |    1018 / 975    |   95.41 / 96.03   |   [initial](https://github.com/lwCVer/RFD/releases/download/pre-train/Mixformer_B2.pth) / [+RFD](https://github.com/lwCVer/RFD/releases/download/pre-train/Mixformer_RFD_B2.pth)   |
-|    Mixformer Base     |   Hybrid    | 34.80 / 35.85 |  3.44 / 3.56  |    830 / 722     | 95.76 / **96.37** |   [initial](https://github.com/lwCVer/RFD/releases/download/pre-train/Mixformer_B4.pth) / [+RFD](https://github.com/lwCVer/RFD/releases/download/pre-train/Mixformer_RFD_B4.pth)   |
-|     ConvNeXt Tiny     |     CNN     | 28.85 / 30.27 |  4.47 / 5.22  |   3109 / 2566    |   93.70 / 95.48   |  [initial](https://github.com/lwCVer/RFD/releases/download/pre-train/ConvNeXt_tiny.pth) / [+RFD](https://github.com/lwCVer/RFD/releases/download/pre-train/ConvNeXt_RFD_tiny.pth)  |
-|    ConvNeXt Small     |     CNN     | 49.49 / 51.90 |  8.70 / 9.45  |   2734 / 2478    |   93.90 / 95.48   | [initial](https://github.com/lwCVer/RFD/releases/download/pre-train/ConvNeXt_small.pth) / [+RFD](https://github.com/lwCVer/RFD/releases/download/pre-train/ConvNeXt_RFD_small.pth) |
-|     ConvNeXt Base     |     CNN     | 87.61 / 91.89 | 15.38 / 16.61 |   2726 / 2520    | 95.02 / **96.13** |  [initial](https://github.com/lwCVer/RFD/releases/download/pre-train/ConvNeXt_base.pth) / [+RFD](https://github.com/lwCVer/RFD/releases/download/pre-train/ConvNeXt_RFD_base.pth)  |
+|     Models     | #Params. (M) | FLOPs (G) | Top-1 acc. | Latency (ms)  <br/> ARM  /  CPU |                                          Weights                                           |
+|:--------------:|:------------:|:---------:|:----------:|:-------------------------------:|:------------------------------------------------------------------------------------------:|
+| DecoupleNet D0 |     1.96     |   0.285   |   95.30    |            2.3 / 6.8            | [D0](https://github.com/lwCVer/DecoupleNet/releases/download/pre-train/DecoupleNet_D0.pth) |
+| DecoupleNet D1 |     4.06     |   0.630   |   95.58    |           3.3 / 11.5            | [D1](https://github.com/lwCVer/DecoupleNet/releases/download/pre-train/DecoupleNet_D1.pth) |
+| DecoupleNet D2 |     6.93     |   1.110   | **95.87**  |           4.3 / 15.4            | [D2](https://github.com/lwCVer/DecoupleNet/releases/download/pre-train/DecoupleNet_D2.pth) |
 
 
 ### 4. Training
 
-Swin V2 Tiny training on RESISC45:
 ```
-python train.py --data_dir ../../data/RESISC45 
+python train.py 
 ```
 To train other models, `train.py` need to be changed.        
   
 
 ## Acknowledgement
-This repository is built using the [timm](https://github.com/rwightman/pytorch-image-models), [ConvNeXt](https://github.com/facebookresearch/ConvNeXt) and [mmdetection](https://github.com/open-mmlab/mmdetection) repositories.
+This repository is built using the [timm](https://github.com/rwightman/pytorch-image-models) and [mmdetection](https://github.com/open-mmlab/mmdetection) repositories.
+
+If you have any questions about this work, you can contact me. Email: 2858191255@qq.com.
+
+Your star is the power that keeps us updating github.
 
 ## Citation
 If you find this repository helpful, please consider citing:
 ```
-@article{lu2023robust,
-  title={A Robust Feature Downsampling Module for Remote Sensing Visual Tasks},
-  author={Lu, Wei and Chen, Si-Bao and Tang, Jin and Ding, Chris HQ and Luo, Bin},
-  journal={IEEE Transactions on Geoscience and Remote Sensing},
-  volume={61},
-  pages={1--12},
-  year={2023},
-  publisher={IEEE}
-}
 ```
