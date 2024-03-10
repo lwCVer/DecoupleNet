@@ -13,19 +13,19 @@ In the realm of computer vision (CV), achieving a balance between speed and accu
 
 
 <p align="center">
-<img src="https://github.com/lwCVer/DecoupleNet/blob/main/figures/Over_view.pdf" width=100% 
+<img src="https://github.com/lwCVer/DecoupleNet/blob/main/figures/over_view.png" width=100% 
 class="center">
 </p> Illustration of DecoupleNet architecture.
 
 
 
 <p align="center">
-<img src="https://github.com/lwCVer/DecoupleNet/blob/main/figures/FID.pdf" width=100% 
+<img src="https://github.com/lwCVer/DecoupleNet/blob/main/figures/FID.png" width=100% 
 class="center">
 </p>  Illustration of various downsampling modules. (a) illustrates convolutional downsampling for selected regions, employing a 3 × 3 convolutional kernel with stride 2, and padding of 1. (b) depicts max-pooling with kernel and stride of 2. (c) provides in-depth depictions of feature integration downsampling (FID) module. Gconv, PII, MaxD, DWConvD, and Cat denote group convolution, partial information interaction, max-pooling downsampling, depthwise separable convolutional downsampling, and concatenation, respectively. (d) illustrates the detailed exhibition of PII in FID module.
 
 <p align="center">
-<img src="https://github.com/lwCVer/DecoupleNet/blob/main/figures/Decouple_Block.pdf" width=100% 
+<img src="https://github.com/lwCVer/DecoupleNet/blob/main/figures/Decouple_block.png" width=100% 
 class="center">
 </p> Illustration of decouple block. Conv, MRLA, and GA denote convolution, medium-range lightweight attention, and global attention, respectively.
 
