@@ -31,11 +31,10 @@ class="center">
 
 <p align="center"> 
 <p align="center"> 
-
-<p align="center">  Illustration of decouple block. Conv, MRLA, and GA denote convolution, medium-range lightweight attention, and global attention, respectively.
 <p align="center"> 
 <img src="https://github.com/lwCVer/DecoupleNet/blob/main/figures/Decouple_block.png" width=70% 
 class="center">
+<p align="center">  Illustration of decouple block. Conv, MRLA, and GA denote convolution, medium-range lightweight attention, and global attention, respectively.
 </p> 
 
 ## Image Classification
