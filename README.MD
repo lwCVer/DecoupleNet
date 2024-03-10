@@ -19,14 +19,14 @@ class="center">
 </p> 
 
 
-Illustration of various downsampling modules. (a) illustrates convolutional downsampling for selected regions, employing a 3 × 3 convolutional kernel with stride 2, and padding of 1. (b) depicts max-pooling with kernel and stride of 2. (c) provides in-depth depictions of feature integration downsampling (FID) module. Gconv, PII, MaxD, DWConvD, and Cat denote group convolution, partial information interaction, max-pooling downsampling, depthwise separable convolutional downsampling, and concatenation, respectively. (d) illustrates the detailed exhibition of PII in FID module.
-<p align="center">
+
+<p align="center">  Illustration of various downsampling modules. (a) illustrates convolutional downsampling for selected regions, employing a 3 × 3 convolutional kernel with stride 2, and padding of 1. (b) depicts max-pooling with kernel and stride of 2. (c) provides in-depth depictions of feature integration downsampling (FID) module. Gconv, PII, MaxD, DWConvD, and Cat denote group convolution, partial information interaction, max-pooling downsampling, depthwise separable convolutional downsampling, and concatenation, respectively. (d) illustrates the detailed exhibition of PII in FID module.
 <img src="https://github.com/lwCVer/DecoupleNet/blob/main/figures/FID.png" width=70% 
 class="center">
 </p>  
 
-Illustration of decouple block. Conv, MRLA, and GA denote convolution, medium-range lightweight attention, and global attention, respectively.
-<p align="center">
+
+<p align="center">  Illustration of decouple block. Conv, MRLA, and GA denote convolution, medium-range lightweight attention, and global attention, respectively.
 <img src="https://github.com/lwCVer/DecoupleNet/blob/main/figures/Decouple_block.png" width=70% 
 class="center">
 </p> 
@@ -74,30 +74,30 @@ To train other models, `train.py` need to be changed.
 
 ### 4. Experimental Results
 
-4.1 Comprehensive comparison of top-1 accuracy, latency, and parameters on NWPU-RESISC45 validation set. Latency test on both NVIDIA AGXXAVIER (ARM) and Intel Core i9-11900 (CPU). The area of each circle is proportional to the number of parameters in model. DecoupleNet with red circles achieves the best balance between accuracy, latency, and parameters.
-<p align="center">
+
+<p align="center">Comprehensive comparison of top-1 accuracy, latency, and parameters on NWPU-RESISC45 validation set. Latency test on both NVIDIA AGXXAVIER (ARM) and Intel Core i9-11900 (CPU). The area of each circle is proportional to the number of parameters in model. DecoupleNet with red circles achieves the best balance between accuracy, latency, and parameters.
 <img src="https://github.com/lwCVer/DecoupleNet/blob/main/figures/fig1.png" width=90% 
 class="center">
 </p>  
 
 
-4.2 Performance of models on NWPU-RESISC45. We presented results for Type, Parameters (Params.), FLOPs, Top-1 Accuracy (Acc.), and Latency across different methods. Latency measurements were acquired through model execution on both the NVIDIA AGX-XAVIER (ARM) and Intel i9-11900 (CPU) platforms, employing batch sizes of 32 and 1 for evaluation, respectively. The symbol * indicated a training image size of 256 * 256.
+
 <p align="center">
 <img src="https://github.com/lwCVer/DecoupleNet/blob/main/figures/fig_cla.png" width=90% 
-class="center">
+class="center">Performance of models on NWPU-RESISC45. We presented results for Type, Parameters (Params.), FLOPs, Top-1 Accuracy (Acc.), and Latency across different methods. Latency measurements were acquired through model execution on both the NVIDIA AGX-XAVIER (ARM) and Intel i9-11900 (CPU) platforms, employing batch sizes of 32 and 1 for evaluation, respectively. The symbol * indicated a training image size of 256 * 256.
 </p> 
 
-4.3 Object detection performance summary. The table provided object detection results for the DOTA 1.0, DIOR-R, and HRSC2016 datasets. We included backbone network parameters, backbone FLOPs, and mAP. The RoI Transformer utilized as rotation object detection head. Model trained for 12 epochs on DOTA 1.0 dataset and 36 epochs on DIOR-R and HRSC2016 datasets.
+4.3 
 <p align="center">
 <img src="https://github.com/lwCVer/DecoupleNet/blob/main/figures/fig_det.png" width=100% 
-class="center">
+class="center">Object detection performance summary. The table provided object detection results for the DOTA 1.0, DIOR-R, and HRSC2016 datasets. We included backbone network parameters, backbone FLOPs, and mAP. The RoI Transformer utilized as rotation object detection head. Model trained for 12 epochs on DOTA 1.0 dataset and 36 epochs on DIOR-R and HRSC2016 datasets.
 </p> 
 
 
-4.4 Main small object detection results % of FasterNet and DecoupleNet on DOTA1.0 validation set. SP: swimming pool. HC: helicopter. SV: small vehicle. ST: storage tank. Red and blue denoted the best and second-best performance of each column.
+4.4 
 <p align="center">
 <img src="https://github.com/lwCVer/DecoupleNet/blob/main/figures/fig_sod.png" width=60% 
-class="center">
+class="center">Main small object detection results % of FasterNet and DecoupleNet on DOTA1.0 validation set. SP: swimming pool. HC: helicopter. SV: small vehicle. ST: storage tank. Red and blue denoted the best and second-best performance of each column.
 </p> 
 
 
