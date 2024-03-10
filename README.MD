@@ -100,8 +100,7 @@ Object detection performance summary. The table provided object detection result
 
 <p align="center">
 <img src="https://github.com/lwCVer/DecoupleNet/blob/main/figures/fig_sod.png" width=60% 
-class="center">
-Main small object detection results % of FasterNet and DecoupleNet on DOTA1.0 validation set. SP: swimming pool. HC: helicopter. SV: small vehicle. ST: storage tank. Red and blue denoted the best and second-best performance of each column.
+class="center">  Main small object detection results % of FasterNet and DecoupleNet on DOTA1.0 validation set. SP: swimming pool. HC: helicopter. SV: small vehicle. ST: storage tank. Red and blue denoted the best and second-best performance of each column.
 </p> 
 
 
