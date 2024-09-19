@@ -225,9 +225,9 @@ The proposed backbone, DecoupleNet, achieves optimal performance.
 
 |     Models     | #Params. (M) | FLOPs (G) |                                          Weights                                           |
 |:--------------:|:------------:|:---------:|:------------------------------------------------------------------------------------------:|
-| DecoupleNet D0 |     1.96     |   0.285   | [D0](https://github.com/lwCVer/DecoupleNet/releases/download/pre-train/DecoupleNet_D0.pth) |
-| DecoupleNet D1 |     4.06     |   0.630   | [D1](https://github.com/lwCVer/DecoupleNet/releases/download/pre-train/DecoupleNet_D1.pth) |
-| DecoupleNet D2 |     6.93     |   1.110   | [D2](https://github.com/lwCVer/DecoupleNet/releases/download/pre-train/DecoupleNet_D2.pth) |
+| DecoupleNet D0 |     1.96     |   0.285   | [D0](https://github.com/lwCVer/DecoupleNet/releases/download/weights/DecoupleNet_D0.pth) |
+| DecoupleNet D1 |     4.06     |   0.630   | [D1](https://github.com/lwCVer/DecoupleNet/releases/download/weights/DecoupleNet_D1.pth) |
+| DecoupleNet D2 |     6.93     |   1.110   | [D2](https://github.com/lwCVer/DecoupleNet/releases/download/weights/DecoupleNet_D2.pth) |
 
    
 
