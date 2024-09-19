@@ -15,11 +15,11 @@ DecoupleNet backbone code is placed under mmrotate/models/backbones/, and the tr
 
 ## Results and models
 
-Imagenet 300-epoch pre-trained DecoupleNet-D0 backbone: [Download](https://github.com/lwCVer/)
+Imagenet 300-epoch pre-trained DecoupleNet-D0 backbone: [Download](https://github.com/lwCVer/DecoupleNet/releases/download/weights/DecoupleNet_D0.pth)
 
-Imagenet 300-epoch pre-trained DecoupleNet_D1 backbone: [Download](https://github.com/lwCVer/)
+Imagenet 300-epoch pre-trained DecoupleNet_D1 backbone: [Download](https://github.com/lwCVer/DecoupleNet/releases/download/weights/DecoupleNet_D1.pth)
 
-Imagenet 300-epoch pre-trained DecoupleNet_D2 backbone: [Download](https://github.com/lwCVer/)
+Imagenet 300-epoch pre-trained DecoupleNet_D2 backbone: [Download](https://github.com/lwCVer/DecoupleNet/releases/download/weights/DecoupleNet_D2.pth)
 
 DOTA1.0
 
