@@ -247,8 +247,8 @@ If you find this repository helpful, please consider citing:
   title={DecoupleNet: A Lightweight Backbone Network with Efficient Feature Decoupling for Remote Sensing Visual Tasks},
   author={Lu, Wei and Chen, Si-Bao and Shu, Qing-Ling and Tang, Jin and Luo, Bin},
   journal={IEEE Transactions on Geoscience and Remote Sensing},
-  volume={},
-  pages={},
+  volume={62},
+  pages={1-13},
   year={2024},
   publisher={IEEE}
 }
