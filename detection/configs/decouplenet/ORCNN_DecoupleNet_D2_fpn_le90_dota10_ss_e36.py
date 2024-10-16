@@ -16,7 +16,7 @@ model = dict(
         drop_path_rate=0.1,
         fork_feat=True,
         init_cfg=dict(type='Pretrained',
-checkpoint="./backbone_weights/DecoupleNet_D2_e265.pth"),
+checkpoint="./backbone_weights/DecoupleNet_D2.pth"),
         pretrained=None),
     neck=dict(
         type='FPN',
