@@ -10,7 +10,7 @@ Remote Sensing Visual Tasks**]
 
 The master branch is built on MMRotate which works with **PyTorch 1.6+**.
 
-DecoupleNet backbone code is placed under mmrotate/models/backbones/, and the train/test configure files are placed under configs/lwganet/ 
+DecoupleNet backbone code is placed under mmrotate/models/backbones/, and the train/test configure files are placed under configs/decouplenet/ 
 
 
 ## Results and models
@@ -42,14 +42,10 @@ Below are quick steps for installation.
 Please refer to [Install Guide](https://mmrotate.readthedocs.io/en/latest/install.html) for more detailed instruction.
 
 ```shell
-conda create -n DecoupleNet-Det python=3.8 -y
-conda activate DecoupleNet-Det
-conda install pytorch==1.12.0 torchvision==0.13.0 torchaudio==0.12.0 cudatoolkit=11.3 -c pytorch
-pip install -U openmim
-mim install mmcv-full
-mim install mmdet
+# step 1: Please install the official 'mmrotate'. (https://github.com/open-mmlab/mmrotate)
 # git clone https://github.com/open-mmlab/mmrotate.git
 # cd mmrotate
+# step 2: Drag the file into the 'mmrotate'.
 pip install -v -e .
 ```
 
