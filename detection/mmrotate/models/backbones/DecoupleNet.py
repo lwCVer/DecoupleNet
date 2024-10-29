@@ -436,8 +436,8 @@ class DecoupleNet(nn.Module):
                 self.load_state_dict(state_dict, False)
 
             # show for debug
-            print('missing_keys: ', missing_keys)
-            print('unexpected_keys: ', unexpected_keys)
+            # print('missing_keys: ', missing_keys)
+            # print('unexpected_keys: ', unexpected_keys)
 
     def forward_cls(self, x):
         # output only the features of last layer for image classification
