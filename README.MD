@@ -229,7 +229,20 @@ The proposed backbone, DecoupleNet, achieves optimal performance.
 | DecoupleNet D1 |     4.06     |   0.630   | [D1](https://github.com/lwCVer/DecoupleNet/releases/download/weights/DecoupleNet_D1.pth) |
 | DecoupleNet D2 |     6.93     |   1.110   | [D2](https://github.com/lwCVer/DecoupleNet/releases/download/weights/DecoupleNet_D2.pth) |
 
-   
+
+### 6. Object Dectection
+DOTA1.0
+|             Model              |  mAP  | training mode | Batch Size |                                                       Configs                                                       |                                                              Download                                                               |
+|:------------------------------:|:-----:|---------------|:----------:|:-------------------------------------------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------------------------------------------:|
+| DecoupleNet_D0 (1024,1024,200) | 77.38 | single-scale  |    1\*8    | [ORCNN_DecoupleNet_D0_fpn_le90_dota10_ss_e36](./configs/DecoupleNet/ORCNN_DecoupleNet_D0_fpn_le90_dota10_ss_e36.py) |          [model](https://github.com/lwCVer/DecoupleNet/releases/download/weights/decouplenet_d0_orcnn_e36.pth)           |
+| DecoupleNet_D2 (1024,1024,200) | 78.04 | single-scale  |    2\*4    | [ORCNN_DecoupleNet_D2_fpn_le90_dota10_ss_e36](./configs/DecoupleNet/ORCNN_DecoupleNet_D2_fpn_le90_dota10_ss_e36.py) |          [model](https://github.com/lwCVer/DecoupleNet/releases/download/weights/decouplenet_d2_orcnn_e36.pth)           |
+
+
+DIOR-R 
+
+|                    Model                     |  mAP  | Batch Size |
+| :------------------------------------------: |:-----:| :--------: |
+|                   LWGANet_L2                   | 67.08 |    1\*8    |
 
 
 
