@@ -25,8 +25,8 @@ DOTA1.0
 
 |             Model              |  mAP  | training mode | Batch Size |                                                       Configs                                                       |                                                              Download                                                               |
 |:------------------------------:|:-----:|---------------|:----------:|:-------------------------------------------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------------------------------------------:|
-| DecoupleNet_D0 (1024,1024,200) | 77.38 | single-scale  |    1\*8    | [ORCNN_DecoupleNet_D0_fpn_le90_dota10_ss_e36](./configs/DecoupleNet/ORCNN_DecoupleNet_D0_fpn_le90_dota10_ss_e36.py) |          [model]([https://github.com/lwCVer/](https://github.com/lwCVer/DecoupleNet/releases/download/weights/decouplenet_d0_orcnn_e36.pth))           |
-| DecoupleNet_D2 (1024,1024,200) | 78.04 | single-scale  |    2\*4    | [ORCNN_DecoupleNet_D2_fpn_le90_dota10_ss_e36](./configs/DecoupleNet/ORCNN_DecoupleNet_D2_fpn_le90_dota10_ss_e36.py) |          [model]([https://github.com/lwCVer/](https://github.com/lwCVer/DecoupleNet/releases/download/weights/decouplenet_d2_orcnn_e36.pth))           |
+| DecoupleNet_D0 (1024,1024,200) | 77.38 | single-scale  |    1\*8    | [ORCNN_DecoupleNet_D0_fpn_le90_dota10_ss_e36](./configs/DecoupleNet/ORCNN_DecoupleNet_D0_fpn_le90_dota10_ss_e36.py) |          [model](https://github.com/lwCVer/DecoupleNet/releases/download/weights/decouplenet_d0_orcnn_e36.pth)           |
+| DecoupleNet_D2 (1024,1024,200) | 78.04 | single-scale  |    2\*4    | [ORCNN_DecoupleNet_D2_fpn_le90_dota10_ss_e36](./configs/DecoupleNet/ORCNN_DecoupleNet_D2_fpn_le90_dota10_ss_e36.py) |          [model](https://github.com/lwCVer/DecoupleNet/releases/download/weights/decouplenet_d0_orcnn_e36.pth)           |
 
 
 DIOR-R 
