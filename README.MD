@@ -255,7 +255,7 @@ Your star is the power that keeps us updating github.
 ## Citation
 If you find this repository helpful, please consider citing:
 ```
-@article{lu2023robust,
+@article{lu2024decouple,
   title={DecoupleNet: A Lightweight Backbone Network with Efficient Feature Decoupling for Remote Sensing Visual Tasks},
   author={Lu, Wei and Chen, Si-Bao and Shu, Qing-Ling and Tang, Jin and Luo, Bin},
   journal={IEEE Transactions on Geoscience and Remote Sensing},
