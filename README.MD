@@ -2,6 +2,7 @@
 
 This is the official Pytorch/Pytorch implementation of the paper: <br/>
 > [**DecoupleNet: A Lightweight Backbone Network with Efficient Feature Decoupling for Remote Sensing Visual Tasks**](https://ieeexplore.ieee.org/document/10685518)
+
 > Wei Lu, Si-Bao Chen*, Qing-Ling Shu, Jin Tang, and Bin Luo, Senior Member, IEEE 
 > 
 >  *IEEE Transactions on Geoscience and Remote Sensing (TGRS), 2024*
