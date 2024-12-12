@@ -1,189 +1,122 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-from functools import partial
-from timm.models.registry import register_model
-from timm.models.vision_transformer import _cfg
 from timm.models.layers import DropPath, trunc_normal_
 from typing import List
 from torch import Tensor
-import os
 import copy
+import os
 import antialiased_cnns
+import torch.nn.functional as F
 
 
-class DRFD(nn.Module):
-    def __init__(self, dim, norm_layer, act_layer):
+try:
+    from mmdet.utils import get_root_logger
+    from mmcv.runner import _load_checkpoint
+    has_mmdet = True
+except ImportError:
+    print("If for detection, please install mmdetection first")
+    has_mmdet = False
+
+
+# FID is feature integration downsampling
+class FID(nn.Module):
+    def __init__(self, dim):
         super().__init__()
         self.dim = dim
         self.outdim = dim * 2
-        self.conv = nn.Conv2d(dim, dim*2, kernel_size=3, stride=1, padding=1, groups=dim)
-        self.conv_c = nn.Conv2d(dim*2, dim*2, kernel_size=3, stride=2, padding=1, groups=dim*2)
-        self.act_c = act_layer()
-        self.norm_c = build_norm_layer(norm_layer, dim*2)[1]
-        self.max_m = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
-        self.norm_m = build_norm_layer(norm_layer, dim*2)[1]
+        self.Gconv = nn.Conv2d(dim, dim*2, kernel_size=3, stride=1, padding=1, groups=dim)
+        self.pii = PII(dim*2, 8)
+        self.conv_D = nn.Conv2d(dim*2, dim*2, kernel_size=3, stride=2, padding=1, groups=dim*2)
+        self.act = nn.GELU()
+        self.batch_norm_c = nn.BatchNorm2d(dim*2)
+        self.max_m1 = nn.MaxPool2d(kernel_size=2, stride=1)
+        self.max_m2 = antialiased_cnns.BlurPool(dim*2, stride=2)
+        self.batch_norm_m = nn.BatchNorm2d(dim*2)
         self.fusion = nn.Conv2d(dim*4, self.outdim, kernel_size=1, stride=1)
 
     def forward(self, x):  # x = [B, C, H, W]
 
-        x = self.conv(x)  # x = [B, 2C, H, W]
-        max = self.norm_m(self.max_m(x))                  # m = [B, 2C, H/2, W/2]
-        conv = self.norm_c(self.act_c(self.conv_c(x)))    # c = [B, 2C, H/2, W/2]
-        x = torch.cat([conv, max], dim=1)                # x = [B, 2C+2C, H/2, W/2]  -->  [B, 4C, H/2, W/2]
-        x = self.fusion(x)                                      # x = [B, 4C, H/2, W/2]     -->  [B, 2C, H/2, W/2]
+        # Gconv + PII
+        x = self.Gconv(x)  # h = [B, 2C, H, W]
+        x = self.pii(x)
+
+        # MaxD + anti-aliased
+        max = self.max_m1(x)  # m = [B, 2C, H/2, W/2]
+        max = self.max_m2(max)  # m = [B, 2C, H/2, W/2]
+        max = self.batch_norm_m(max)
+
+        # ConvD
+        conv = self.conv_D(x)  # h = [B, 2C, H/2, W/2]
+        conv = self.act(conv)
+        conv = self.batch_norm_c(conv)  # h = [B, 2C, H/2, W/2]
+
+        # Concat
+        x = torch.cat([conv, max], dim=1)  # x = [B, 4C, H/2, W/2]
+        x = self.fusion(x)  # x = [B, 4C, H/2, W/2]  -->  [B, 2C, H/2, W/2]
 
         return x
 
-class PA(nn.Module):
-    def __init__(self, dim, norm_layer, act_layer):
+
+class PII(nn.Module):
+
+    def __init__(self, dim, n_div):
         super().__init__()
-        self.p_conv = nn.Sequential(
-            nn.Conv2d(dim, dim*4, 1, bias=False),
-            build_norm_layer(norm_layer, dim*4)[1],
-            act_layer(),
-            nn.Conv2d(dim*4, dim, 1, bias=False)
-        )
-        self.gate_fn = nn.Sigmoid()
+        self.dim_conv = dim // n_div
+        self.dim_untouched = int((dim / 2) - self.dim_conv)
+        self.conv = nn.Conv2d(self.dim_conv*2, self.dim_conv*2, 3, 1, 1, bias=False)
 
-    def forward(self, x):
-        att = self.p_conv(x)
-        x = x * self.gate_fn(att)
+    def forward(self, x: Tensor) -> Tensor:
+
+        x1, x2, x3, x4 = torch.split(x, [self.dim_conv, self.dim_untouched, self.dim_conv, self.dim_untouched], dim=1)
+        x = torch.cat((x1, x3), 1)
+        x1 = self.conv(x)
+        x = torch.cat((x1, x2, x4), 1)
 
         return x
 
 
-class LA(nn.Module):
-    def __init__(self, dim, norm_layer, act_layer):
-        super().__init__()
-        self.conv = nn.Sequential(
-            nn.Conv2d(dim, dim, 3, 1, 1, bias=False),
-            build_norm_layer(norm_layer, dim)[1],
-            act_layer()
-        )
-
-    def forward(self, x):
-        x = self.conv(x)
-        return x
-
-
-class MRA(nn.Module):
+# MRLA is medium-range lightweight Attention
+class MRLA(nn.Module):
     def __init__(self, channel, att_kernel, norm_layer):
-        super().__init__()
+        super(MRLA, self).__init__()
         att_padding = att_kernel // 2
         self.gate_fn = nn.Sigmoid()
         self.channel = channel
-        self.max_m1 = nn.MaxPool2d(kernel_size=3, stride=1, padding=1)
-        self.max_m2 = antialiased_cnns.BlurPool(channel, stride=3)
-        self.H_att1 = nn.Conv2d(channel, channel, (att_kernel, 3), 1, (att_padding, 1), groups=channel, bias=False)
-        self.V_att1 = nn.Conv2d(channel, channel, (3, att_kernel), 1, (1, att_padding), groups=channel, bias=False)
-        self.H_att2 = nn.Conv2d(channel, channel, (att_kernel, 3), 1, (att_padding, 1), groups=channel, bias=False)
-        self.V_att2 = nn.Conv2d(channel, channel, (3, att_kernel), 1, (1, att_padding), groups=channel, bias=False)
-        self.norm = build_norm_layer(norm_layer, channel)[1]
+        channels12 = int(channel / 2)
+        self.primary_conv = nn.Sequential(
+            nn.Conv2d(channel, channels12, 1, 1, bias=False),
+            norm_layer(channels12),
+            nn.GELU(),
+        )
+        self.cheap_operation = nn.Sequential(
+            nn.Conv2d(channels12, channels12, 3, 1, 1, groups=channels12, bias=False),
+            norm_layer(channels12),
+            nn.GELU(),
+        )
+        self.init = nn.Sequential(
+            nn.Conv2d(channel, channel, 1, 1, bias=False),
+            norm_layer(channel),
+        )
+        self.H_att = nn.Conv2d(channel, channel, (att_kernel, 1), 1, (att_padding, 0), groups=channel, bias=False)
+        self.V_att = nn.Conv2d(channel, channel, (1, att_kernel), 1, (0, att_padding), groups=channel, bias=False)
+        self.batchnorm = norm_layer(channel)
 
     def forward(self, x):
-        x_tem = self.max_m1(x)
-        x_tem = self.max_m2(x_tem)
-        x_h1 = self.H_att1(x_tem)
-        x_w1 = self.V_att1(x_tem)
-        x_h2 = self.inv_h_transform(self.H_att2(self.h_transform(x_tem)))
-        x_w2 = self.inv_v_transform(self.V_att2(self.v_transform(x_tem)))
+        x_tem = self.init(F.avg_pool2d(x, kernel_size=2, stride=2))
+        x_h = self.H_att(x_tem)
+        x_w = self.V_att(x_tem)
+        mrla = self.batchnorm(x_h + x_w)
 
-        att = self.norm(x_h1 + x_w1 + x_h2 + x_w2)
-
-        out = x[:, :self.channel, :, :] * F.interpolate(self.gate_fn(att),
-                                                        size=(x.shape[-2], x.shape[-1]),
-                                                        mode='nearest')
+        x1 = self.primary_conv(x)
+        x2 = self.cheap_operation(x1)
+        out = torch.cat([x1, x2], dim=1)
+        out = out[:, :self.channel, :, :] * F.interpolate(self.gate_fn(mrla),
+                                                          size=(out.shape[-2], out.shape[-1]),
+                                                          mode='nearest')
         return out
 
-    def h_transform(self, x):
-        shape = x.size()
-        x = torch.nn.functional.pad(x, (0, shape[-1]))
-        x = x.reshape(shape[0], shape[1], -1)[..., :-shape[-1]]
-        x = x.reshape(shape[0], shape[1], shape[2], 2*shape[3]-1)
-        return x
 
-    def inv_h_transform(self, x):
-        shape = x.size()
-        x = x.reshape(shape[0], shape[1], -1).contiguous()
-        x = torch.nn.functional.pad(x, (0, shape[-2]))
-        x = x.reshape(shape[0], shape[1], shape[-2], 2*shape[-2])
-        x = x[..., 0: shape[-2]]
-        return x
-
-    def v_transform(self, x):
-        x = x.permute(0, 1, 3, 2)
-        shape = x.size()
-        x = torch.nn.functional.pad(x, (0, shape[-1]))
-        x = x.reshape(shape[0], shape[1], -1)[..., :-shape[-1]]
-        x = x.reshape(shape[0], shape[1], shape[2], 2*shape[3]-1)
-        return x.permute(0, 1, 3, 2)
-
-    def inv_v_transform(self, x):
-        x = x.permute(0, 1, 3, 2)
-        shape = x.size()
-        x = x.reshape(shape[0], shape[1], -1)
-        x = torch.nn.functional.pad(x, (0, shape[-2]))
-        x = x.reshape(shape[0], shape[1], shape[-2], 2*shape[-2])
-        x = x[..., 0: shape[-2]]
-        return x.permute(0, 1, 3, 2)
-
-
-class GA12(nn.Module):
-    def __init__(self, dim, act_layer):
-        super().__init__()
-        self.downpool = nn.MaxPool2d(kernel_size=2, stride=2, return_indices=True)
-        self.uppool = nn.MaxUnpool2d((2, 2), 2, padding=0)
-        self.proj_1 = nn.Conv2d(dim, dim, 1)
-        self.activation = act_layer()
-        self.conv0 = nn.Conv2d(dim, dim, 5, padding=2, groups=dim)
-        self.conv_spatial = nn.Conv2d(dim, dim, 7, stride=1, padding=9, groups=dim, dilation=3)
-        self.conv1 = nn.Conv2d(dim, dim // 2, 1)
-        self.conv2 = nn.Conv2d(dim, dim // 2, 1)
-        self.conv_squeeze = nn.Conv2d(2, 2, 7, padding=3)
-        self.conv = nn.Conv2d(dim // 2, dim, 1)
-        self.proj_2 = nn.Conv2d(dim, dim, 1)
-
-    def forward(self, x):
-        x_, idx = self.downpool(x)
-        x_ = self.proj_1(x_)
-        x_ = self.activation(x_)
-        attn1 = self.conv0(x_)
-        attn2 = self.conv_spatial(attn1)
-
-        attn1 = self.conv1(attn1)
-        attn2 = self.conv2(attn2)
-
-        attn = torch.cat([attn1, attn2], dim=1)
-        avg_attn = torch.mean(attn, dim=1, keepdim=True)
-        max_attn, _ = torch.max(attn, dim=1, keepdim=True)
-        agg = torch.cat([avg_attn, max_attn], dim=1)
-        sig = self.conv_squeeze(agg).sigmoid()
-        attn = attn1 * sig[:, 0, :, :].unsqueeze(1) + attn2 * sig[:, 1, :, :].unsqueeze(1)
-        attn = self.conv(attn)
-        x_ = x_ * attn
-        x_ = self.proj_2(x_)
-        x = self.uppool(x_, indices=idx)
-        return x
-
-
-class D_GA(nn.Module):
-
-    def __init__(self, dim, norm_layer):
-        super().__init__()
-        self.norm = build_norm_layer(norm_layer, dim)[1]
-        self.attn = GA(dim)
-        self.downpool = nn.MaxPool2d(kernel_size=2, stride=2, return_indices=True)
-        self.uppool = nn.MaxUnpool2d((2, 2), 2, padding=0)
-
-    def forward(self, x):
-        x_, idx = self.downpool(x)
-        x = self.norm(self.attn(x_))
-        x = self.uppool(x, indices=idx)
-
-        return x
-
-
+# GA is long range Attention
 class GA(nn.Module):
     def __init__(self, dim, head_dim=4, num_heads=None, qkv_bias=False,
                  attn_drop=0., proj_drop=0., proj_bias=False, **kwargs):
@@ -220,67 +153,91 @@ class GA(nn.Module):
         return x
 
 
-class LWGA_Block(nn.Module):
+# MBFD is multi-branch feature decoupling module
+class MBFD(nn.Module):
+
+    def __init__(self, dim, stage, att_kernel, norm_layer):
+        super().__init__()
+        self.dim = dim
+        self.stage = stage
+        self.dim_learn = dim // 4
+        self.dim_untouched = dim - self.dim_learn - self.dim_learn
+        self.Conv = nn.Conv2d(self.dim_learn, self.dim_learn, 3, 1, 1, bias=False)
+        self.MRLA = MRLA(self.dim_learn, att_kernel, norm_layer)  # MRLA is medium range Attention
+        if stage > 2:
+            self.GA = GA(self.dim_untouched)      # GA is long range Attention
+            self.norm = norm_layer(self.dim_untouched)
+
+    def forward(self, x: Tensor) -> Tensor:
+        # for training/inference
+        x1, x2, x3 = torch.split(x, [self.dim_learn, self.dim_learn, self.dim_untouched], dim=1)
+        x1 = self.Conv(x1)
+        x2 = self.MRLA(x2)
+        if self.stage > 2:
+            x3 = self.norm(x3 + self.GA(x3))
+        x = torch.cat((x1, x2, x3), 1)
+
+        return x
+
+
+class MLPBlock(nn.Module):
+
     def __init__(self,
                  dim,
                  stage,
                  att_kernel,
                  mlp_ratio,
                  drop_path,
+                 layer_scale_init_value,
                  act_layer,
-                 norm_layer
+                 norm_layer,
                  ):
+
         super().__init__()
-        self.stage = stage
-        self.dim_split = dim // 4
+        self.dim = dim
+        self.mlp_ratio = mlp_ratio
         self.drop_path = DropPath(drop_path) if drop_path > 0. else nn.Identity()
 
         mlp_hidden_dim = int(dim * mlp_ratio)
 
         mlp_layer: List[nn.Module] = [
             nn.Conv2d(dim, mlp_hidden_dim, 1, bias=False),
-            build_norm_layer(norm_layer, mlp_hidden_dim)[1],
+            norm_layer(mlp_hidden_dim),
             act_layer(),
             nn.Conv2d(mlp_hidden_dim, dim, 1, bias=False)
         ]
 
         self.mlp = nn.Sequential(*mlp_layer)
 
-        self.PA = PA(self.dim_split, norm_layer, act_layer)     # PA is point attention
-        self.LA = LA(self.dim_split, norm_layer, act_layer)     # LA is local attention
-        self.MRA = MRA(self.dim_split, att_kernel, norm_layer)  # MRA is medium-range attention
-        if stage == 2:
-            self.GA3 = D_GA(self.dim_split, norm_layer)         # GA3 is global attention (stage of 3)
-        elif stage == 3:
-            self.GA4 = GA(self.dim_split)                       # GA4 is global attention (stage of 4)
-            self.norm = build_norm_layer(norm_layer, self.dim_split)[1]
+        self.MBFD = MBFD(
+            dim,
+            stage,
+            att_kernel,
+            norm_layer
+        )
+
+        if layer_scale_init_value > 0:
+            self.layer_scale = nn.Parameter(layer_scale_init_value * torch.ones((dim)), requires_grad=True)
+            self.forward = self.forward_layer_scale
         else:
-            self.GA12 = GA12(self.dim_split, act_layer)         # GA12 is global attention (stages of 1 and 2)
-            self.norm = build_norm_layer(norm_layer, self.dim_split)[1]
-        self.norm1 = build_norm_layer(norm_layer, dim)[1]
-        self.drop_path = DropPath(drop_path)
+            self.forward = self.forward
 
     def forward(self, x: Tensor) -> Tensor:
-        # for training/inference
-        shortcut = x.clone()
-        x1, x2, x3, x4 = torch.split(x, [self.dim_split, self.dim_split, self.dim_split, self.dim_split], dim=1)
-        x1 = x1 + self.PA(x1)
-        x2 = self.LA(x2)
-        x3 = self.MRA(x3)
-        if self.stage == 2:
-            x4 = x4 + self.GA3(x4)
-        elif self.stage == 3:
-            x4 = self.norm(x4 + self.GA4(x4))
-        else:
-            x4 = self.norm(x4 + self.GA12(x4))
-        x_att = torch.cat((x1, x2, x3, x4), 1)
+        shortcut = x
+        x = self.MBFD(x)
+        x = shortcut + self.drop_path(self.mlp(x))
+        return x
 
-        x = shortcut + self.norm1(self.drop_path(self.mlp(x_att)))
-
+    def forward_layer_scale(self, x: Tensor) -> Tensor:
+        shortcut = x
+        x = self.MBFD(x)
+        x = shortcut + self.drop_path(
+            self.layer_scale.unsqueeze(-1).unsqueeze(-1) * self.mlp(x))
         return x
 
 
 class BasicStage(nn.Module):
+
     def __init__(self,
                  dim,
                  stage,
@@ -288,6 +245,7 @@ class BasicStage(nn.Module):
                  att_kernel,
                  mlp_ratio,
                  drop_path,
+                 layer_scale_init_value,
                  norm_layer,
                  act_layer
                  ):
@@ -295,15 +253,16 @@ class BasicStage(nn.Module):
         super().__init__()
 
         blocks_list = [
-            LWGA_Block(
+            MLPBlock(
                 dim=dim,
                 stage=stage,
                 att_kernel=att_kernel,
                 mlp_ratio=mlp_ratio,
                 drop_path=drop_path[i],
+                layer_scale_init_value=layer_scale_init_value,
                 norm_layer=norm_layer,
                 act_layer=act_layer
-                 )
+            )
             for i in range(depth)
         ]
 
@@ -314,13 +273,13 @@ class BasicStage(nn.Module):
         return x
 
 
-class Stem(nn.Module):
+class PatchEmbed(nn.Module):
 
-    def __init__(self, in_chans, stem_dim, norm_layer):
+    def __init__(self, patch_size, patch_stride, in_chans, embed_dim, norm_layer):
         super().__init__()
-        self.proj = nn.Conv2d(in_chans, stem_dim, kernel_size=4, stride=4, bias=False)
+        self.proj = nn.Conv2d(in_chans, embed_dim, kernel_size=patch_size, stride=patch_stride, bias=False)
         if norm_layer is not None:
-            self.norm = build_norm_layer(norm_layer, stem_dim)[1]
+            self.norm = norm_layer(embed_dim)
         else:
             self.norm = nn.Identity()
 
@@ -329,37 +288,49 @@ class Stem(nn.Module):
         return x
 
 
-class LWGANet(nn.Module):
+class DecoupleNet(nn.Module):
 
     def __init__(self,
                  in_chans=3,
                  num_classes=1000,
-                 stem_dim=64,
-                 depths=(1, 2, 4, 2),
-                 att_kernel=(11, 11, 11, 11),
+                 embed_dim=32,
+                 depths=(1, 6, 6, 2),
+                 att_kernel=(9, 9, 9, 9),
+                 mlp_ratio=2.,
+                 patch_size=4,
+                 patch_stride=4,
                  norm_layer=nn.BatchNorm2d,
                  act_layer=nn.GELU,
-                 mlp_ratio=2.,
-                 stem_norm=True,
+                 patch_norm=True,
                  feature_dim=1280,
                  drop_path_rate=0.1,
+                 layer_scale_init_value=0,
                  fork_feat=False,
                  init_cfg=None,
                  pretrained=None,
                  **kwargs):
         super().__init__()
 
+        norm_layer = norm_layer
+        act_layer = act_layer
+
         if not fork_feat:
             self.num_classes = num_classes
         self.num_stages = len(depths)
-        self.num_features = int(stem_dim * 2 ** (self.num_stages - 1))
+        self.embed_dim = embed_dim
+        self.patch_norm = patch_norm
+        self.num_features = int(embed_dim * 2 ** (self.num_stages - 1))
+        self.mlp_ratio = mlp_ratio
+        self.depths = depths
+        self.att_kernel = att_kernel
 
-        if stem_dim == 96:
-            act_layer = nn.ReLU
-
-        self.Stem = Stem(
-            in_chans=in_chans, stem_dim=stem_dim,
-            norm_layer=norm_layer if stem_norm else None
+        # split image into non-overlapping patches
+        self.patch_embed = PatchEmbed(
+            patch_size=patch_size,
+            patch_stride=patch_stride,
+            in_chans=in_chans,
+            embed_dim=embed_dim,
+            norm_layer=norm_layer if self.patch_norm else None
         )
 
         # stochastic depth decay rule
@@ -369,12 +340,13 @@ class LWGANet(nn.Module):
         # build layers
         stages_list = []
         for i_stage in range(self.num_stages):
-            stage = BasicStage(dim=int(stem_dim * 2 ** i_stage),
+            stage = BasicStage(dim=int(embed_dim * 2 ** i_stage),
                                stage=i_stage,
                                depth=depths[i_stage],
                                att_kernel=att_kernel[i_stage],
-                               mlp_ratio=mlp_ratio,
+                               mlp_ratio=self.mlp_ratio,
                                drop_path=dpr[sum(depths[:i_stage]):sum(depths[:i_stage + 1])],
+                               layer_scale_init_value=layer_scale_init_value,
                                norm_layer=norm_layer,
                                act_layer=act_layer
                                )
@@ -383,7 +355,7 @@ class LWGANet(nn.Module):
             # patch merging layer
             if i_stage < self.num_stages - 1:
                 stages_list.append(
-                    DRFD(dim=int(stem_dim * 2 ** i_stage), norm_layer=norm_layer, act_layer=act_layer)
+                    FID(dim=int(embed_dim * 2 ** i_stage))
                 )
 
         self.stages = nn.Sequential(*stages_list)
@@ -398,7 +370,7 @@ class LWGANet(nn.Module):
                 if i_emb == 0 and os.environ.get('FORK_LAST3', None):
                     raise NotImplementedError
                 else:
-                    layer = build_norm_layer(norm_layer, int(stem_dim * 2 ** i_emb))[1]
+                    layer = norm_layer(int(embed_dim * 2 ** i_emb))
                 layer_name = f'norm{i_layer}'
                 self.add_module(layer_name, layer)
         else:
@@ -467,7 +439,7 @@ class LWGANet(nn.Module):
 
     def forward_cls(self, x):
         # output only the features of last layer for image classification
-        x = self.Stem(x)
+        x = self.patch_embed(x)
         x = self.stages(x)
         x = self.avgpool_pre_head(x)  # B C 1 1
         x = torch.flatten(x, 1)
@@ -477,7 +449,7 @@ class LWGANet(nn.Module):
 
     def forward_det(self, x: Tensor) -> Tensor:
         # output the features of four stages for dense prediction
-        x = self.Stem(x)
+        x = self.patch_embed(x)
         outs = []
         for idx, stage in enumerate(self.stages):
             x = stage(x)
@@ -488,61 +460,42 @@ class LWGANet(nn.Module):
         return outs
 
 
-
-def LWGANet_L0_1242_e32_k11_GELU(embed_dim=32, **kwargs):
-    model = LWGANet(in_chans=3,
-                    embed_dim=embed_dim,
-                    depths=(1, 2, 4, 2),
-                    att_kernel=(11, 11, 11, 11),
-                    drop_path_rate=0.,
-                    fork_feat=True,
-                    **kwargs)
-    checkpoint = torch.load('', map_location=torch.device('cuda:0'))
-    _state_dict = checkpoint['model']
-    state_dict = _state_dict
-    missing_keys, unexpected_keys = model.load_state_dict(state_dict, False)
-
-    # show for debug
-    print('missing_keys: ', missing_keys)
-    print('unexpected_keys: ', unexpected_keys)
+def DecoupleNet_D0_1662_e32_k9_drop0(num_classes: int = 1000, **kwargs):
+    model = DecoupleNet(in_chans=3,
+                        num_classes=num_classes,
+                        embed_dim=32,
+                        depths=(1, 6, 6, 2),
+                        att_kernel=(9, 9, 9, 9),
+                        drop_path_rate=0.0,
+                        fork_feat=True,
+                        **kwargs)
 
     return model
 
 
-@register_model
-def LWGANet_L1_1242_e64_k11_GELU_drop01(embed_dim=64, **kwargs):
-    model = LWGANet(in_chans=3,
-                    stem_dim=embed_dim,
-                    depths=(1, 2, 4, 2),
-                    att_kernel=(11, 11, 11, 11),
-                    norm_layer=nn.BatchNorm2d,
-                    act_layer=nn.GELU,
-                    drop_path_rate=0.1,
-                    fork_feat=True,
-                    **kwargs)
-    checkpoint = torch.load('', map_location=torch.device('cuda:0'))
-    _state_dict = checkpoint['model']
-    state_dict = _state_dict
-    missing_keys, unexpected_keys = model.load_state_dict(state_dict, False)
-
-    # show for debug
-    print('missing_keys: ', missing_keys)
-    print('unexpected_keys: ', unexpected_keys)
+def DecoupleNet_D1_1662_e48_k9(num_classes: int = 1000, **kwargs):
+    model = DecoupleNet(in_chans=3,
+                      num_classes=num_classes,
+                      embed_dim=48,
+                      depths=(1, 6, 6, 2),
+                      att_kernel=(9, 9, 9, 9),
+                      drop_path_rate=0.1,
+                        fork_feat=True,
+                        **kwargs)
 
     return model
 
-@register_model
-def LWGANet_L2_1442_e96_k11_ReLU(embed_dim=96, dropout=0.1, **kwargs):
-    model = LWGANet(in_chans=3,
-                    num_classes=num_classes,
-                    stem_dim=embed_dim,
-                    depths=(1, 4, 4, 2),
-                    att_kernel=(11, 11, 11, 11),
-                    norm_layer=nn.BatchNorm2d,
-                    drop_path_rate=0.1,
-                    act_layer=nn.ReLU,
-                    **kwargs)
-    checkpoint = torch.load('./backbone_weights/lwganet_l2_e299.pth',
+
+def DecoupleNet_D2_1662_e64_k9_drop01(num_classes: int = 1000, **kwargs):
+    model = DecoupleNet(in_chans=3,
+                        num_classes=num_classes,
+                        embed_dim=64,
+                        depths=(1, 6, 6, 2),
+                        att_kernel=(9, 9, 9, 9),
+                        drop_path_rate=0.1,
+                        fork_feat=True,
+                        **kwargs)
+    checkpoint = torch.load('../backbone_weights/DecoupleNet_D2.pth',
                             map_location=torch.device('cuda:0'))
     _state_dict = checkpoint['model']
     state_dict = _state_dict
@@ -551,4 +504,5 @@ def LWGANet_L2_1442_e96_k11_ReLU(embed_dim=96, dropout=0.1, **kwargs):
     # show for debug
     print('missing_keys: ', missing_keys)
     print('unexpected_keys: ', unexpected_keys)
+
     return model
