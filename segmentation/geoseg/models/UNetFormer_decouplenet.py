@@ -5,9 +5,6 @@ from einops import rearrange, repeat
 
 from timm.models.layers import DropPath, to_2tuple, trunc_normal_
 import timm
-from .lwganet import (LWGANet_L0_1242_e32_k11_GELU,
-                      LWGANet_L1_1242_e64_k11_GELU_drop01,
-                      LWGANet_L2_1442_e96_k11_ReLU)
 from .DecoupleNet import DecoupleNet_D2_1662_e64_k9_drop01
 
 class ConvBNReLU(nn.Sequential):
