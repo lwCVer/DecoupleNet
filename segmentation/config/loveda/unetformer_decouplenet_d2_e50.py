@@ -34,9 +34,9 @@ resume_ckpt_path = None  # whether continue training with the checkpoint, defaul
 #  define the network
 net = UNetFormer_DecoupleNet_D2(num_classes=num_classes)
 # flops and params
-#flops, params = get_model_complexity_info(net, (3, 1024, 1024), as_strings=True, print_per_layer_stat=True)
-#print("params: ", params)
-#print("flops: ", flops)
+# flops, params = get_model_complexity_info(net, (3, 1024, 1024), as_strings=True, print_per_layer_stat=True)
+# print("params: ", params)
+# print("flops: ", flops)
 
 # define the loss
 loss = UnetFormerLoss(ignore_index=ignore_index)
