@@ -244,9 +244,11 @@ DIOR-R
 | :------------------------------------------: |:-----:| :--------: |
 |                   LWGANet_L2                   | 67.08 |    1\*8    |
 
+
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=lwCVer/DecoupleNet&type=Timeline)](https://star-history.com/#lwCVer/DecoupleNet&Timeline)
+[![Star History Chart](https://api.star-history.com/svg?repos=lwCVer/DecoupleNet&type=Date)](https://star-history.com/#lwCVer/DecoupleNet&Date)
+
 
 ## Acknowledgement
 This repository is built using the [timm](https://github.com/rwightman/pytorch-image-models), [mmrotate](https://github.com/open-mmlab/mmrotate),  and [unetformer](https://github.com/WangLibo1995/GeoSeg) repositories.
