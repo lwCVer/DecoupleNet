@@ -8,16 +8,6 @@ This is the official Pytorch/Pytorch implementation of the paper: <br/>
 >  *IEEE Transactions on Geoscience and Remote Sensing (TGRS), 2024*
 > 
 
---- 
-
-<details>
-  <summary>
-  <font size="+1">Abstract</font>
-  </summary>
-In the realm of computer vision (CV), balancing speed and accuracy remains a significant challenge. Recent efforts have focused on developing lightweight networks that optimize computational efficiency and feature extraction. However, in remote sensing (RS) imagery, where small and multi-scale object detection is critical, these networks often fall short in performance. To address these challenges, DecoupleNet is proposed, an innovative lightweight backbone network specifically designed for RS visual tasks in resource-constrained environments. DecoupleNet incorporates two key modules: the feature integration downsampling (FID) module and the multi-branch feature decoupling (MBFD) module. FID module preserves small object features during downsampling, while MBFD module enhances small and multi-scale object feature representation through a novel decoupling approach. Comprehensive evaluations on three RS visual tasks demonstrate DecoupleNet's superior balance of accuracy and computational efficiency compared to existing lightweight networks. On the NWPU-RESISC45 classification dataset, DecoupleNet achieves a top-1 accuracy of 95.30\%, surpassing FasterNet by 2\%, with fewer parameters and lower computational overhead. In object detection tasks using the DOTA 1.0 test set, DecoupleNet records an accuracy of 78.04\%, outperforming ARC-R50 by 0.69\%. For semantic segmentation on the LoveDA test set, DecoupleNet achieves 53.1\% accuracy, surpassing UnetFormer by 0.70\%. These findings open new avenues for advancing RS image analysis on resource-constrained devices, addressing a pivotal gap in the field.
-</details>
-
-
 
 
 ----
@@ -27,6 +17,16 @@ In the realm of computer vision (CV), balancing speed and accuracy remains a sig
 class="center">
 <p align="center">  Illustration of DecoupleNet architecture.
 </p> 
+
+--- 
+
+<details>
+  <summary>
+  <font size="+1">Abstract</font>
+  </summary>
+In the realm of computer vision (CV), balancing speed and accuracy remains a significant challenge. Recent efforts have focused on developing lightweight networks that optimize computational efficiency and feature extraction. However, in remote sensing (RS) imagery, where small and multi-scale object detection is critical, these networks often fall short in performance. To address these challenges, DecoupleNet is proposed, an innovative lightweight backbone network specifically designed for RS visual tasks in resource-constrained environments. DecoupleNet incorporates two key modules: the feature integration downsampling (FID) module and the multi-branch feature decoupling (MBFD) module. FID module preserves small object features during downsampling, while MBFD module enhances small and multi-scale object feature representation through a novel decoupling approach. Comprehensive evaluations on three RS visual tasks demonstrate DecoupleNet's superior balance of accuracy and computational efficiency compared to existing lightweight networks. On the NWPU-RESISC45 classification dataset, DecoupleNet achieves a top-1 accuracy of 95.30\%, surpassing FasterNet by 2\%, with fewer parameters and lower computational overhead. In object detection tasks using the DOTA 1.0 test set, DecoupleNet records an accuracy of 78.04\%, outperforming ARC-R50 by 0.69\%. For semantic segmentation on the LoveDA test set, DecoupleNet achieves 53.1\% accuracy, surpassing UnetFormer by 0.70\%. These findings open new avenues for advancing RS image analysis on resource-constrained devices, addressing a pivotal gap in the field.
+</details>
+
 
 ----
 
