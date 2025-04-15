@@ -240,7 +240,10 @@ DIOR-R
 ## Acknowledgement
 This repository is built using the [timm](https://github.com/rwightman/pytorch-image-models), [mmrotate](https://github.com/open-mmlab/mmrotate),  and [unetformer](https://github.com/WangLibo1995/GeoSeg) repositories.
 
-If you have any questions about this work, you can contact me. Email: luwei_ahu@qq.com.
+If you have any questions about this work, you can contact me. 
+
+Email: [luwei_ahu@qq.com](mailto:luwei_ahu@qq.com); WeChat: lw2858191255.
+
 
 Your star is the power that keeps us updating github.
 
