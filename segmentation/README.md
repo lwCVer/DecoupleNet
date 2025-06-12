@@ -87,12 +87,12 @@ pip install -r requirements.txt
 
 ## Pretrained Weights of Backbones
 
+|     Models     | #Params. (M) | FLOPs (G) |                                          Weights                                           |
+|:--------------:|:------------:|:---------:|:------------------------------------------------------------------------------------------:|
+| DecoupleNet D0 |     1.96     |   0.285   | [Download](https://github.com/lwCVer/DecoupleNet/releases/download/weights/DecoupleNet_D0.pth) |
+| DecoupleNet D1 |     4.06     |   0.630   | [Download](https://github.com/lwCVer/DecoupleNet/releases/download/weights/DecoupleNet_D1.pth) |
+| DecoupleNet D2 |     6.93     |   1.110   | [Download](https://github.com/lwCVer/DecoupleNet/releases/download/weights/DecoupleNet_D2.pth) |
 
-Imagenet 300-epoch pre-trained DecoupleNet_D0 backbone: [Download](https://github.com/)
-
-Imagenet 300-epoch pre-trained DecoupleNet_D1 backbone: [Download](https://github.com/lwCVer/)
-
-Imagenet 300-epoch pre-trained DecoupleNet_D2 backbone: [Download](https://github.com/lwCVer/)
 
 ## Data Preprocessing
 
